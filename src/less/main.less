@@ -1,0 +1,57 @@
+@import "../components/bootstrap/less/bootstrap";
+@import "lib/mapbox.css";
+@import "../components/nvd3/src/nv.d3.css";
+
+#map {
+    position:absolute;
+    top:0;
+    bottom:0;
+    width:100%;
+}
+
+.d3-vec {
+    position:absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+circle {
+    fill-opacity: 1;
+}
+
+circle:hover {
+    fill-opacity: 1;
+}
+
+path {
+    fill: none;
+    stroke-opacity: 1;
+    stroke-width: 4px;
+}
+
+path:hover {
+    fill-opacity: 1;
+}
+
+.map-mm {
+    top: 0;
+    left: auto;
+    right: 0;
+    height: 20px;
+}
+
+#charts, #charts-shim {
+    position: fixed;
+    top: 0;
+    left: 100px;
+    right: 100px;
+    min-height: 200px;
+    height: 20%;
+}
+
+#charts-shim {
+    opacity: .5;
+    background-color: lightgrey;
+}
