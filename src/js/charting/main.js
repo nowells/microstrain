@@ -22,11 +22,22 @@ define(function(require) {
                     .append('div')
                     .attr('class', 'd3-vec'),
                 svg = div.append('svg'),
+                defs = svg.append('defs'),
                 g = svg.append('g'),
                 connectors = g.append('g').attr('class', 'connectors'),
                 points = g.append('g').attr('class', 'points'),
                 getter = function(attr) {
-                    return function(d) { return d[attr]; };
+                    return function(d) {
+                        var bits = attr.split('.');
+                        for(var i=0; i<bits.length; i++) {
+                            var bit = bits[i];
+                            if(!d || typeof(d) !== 'object') {
+                                return;
+                            }
+                            d = d[bit];
+                        }
+                        return d;
+                    };
                 };
 
             function d3_layer() {
@@ -77,7 +88,18 @@ define(function(require) {
                         });
                         d.x = coords.x;
                         d.y = coords.y;
+
+                        d.angle = 0;
+                        if (d.previous) {
+                            d.angle = ((d.y - d.previous.y) / (d.x - d.previous.x)) * (180 / Math.PI);
+                        }
                     });
+
+                    svg.selectAll('.gradientSelectorHack')
+                        .attr('x1', getter('x'))
+                        .attr('y1', getter('y'))
+                        .attr('x2', getter('previous.x'))
+                        .attr('y2', getter('previous.y'));
 
                     svg.selectAll('path')
                         .attr('stroke', getter('gradientUrl'))
@@ -103,6 +125,20 @@ define(function(require) {
                     groups = points.selectAll('g.sample').data(data)
                         .enter().append('g')
                         .attr('class', 'sample');
+
+                    var gradient = groups.append('linearGradient')
+                        .attr('id', getter('gradient'))
+                        .attr('class', 'gradientSelectorHack')
+                        .attr('gradientUnits', 'userSpaceOnUse')
+                        .each(function() { defs.node().appendChild(this); });
+
+                    gradient.append('stop')
+                        .attr('stop-color', getter('color'))
+                        .attr('offset', '0%');
+
+                    gradient.append('stop')
+                        .attr('stop-color', getter('previous.color'))
+                        .attr('offset', '100%');
 
                     groups.append('path')
                         .each(function() { connectors.node().appendChild(this); });
@@ -135,22 +171,14 @@ define(function(require) {
                         d.datetime = new Date(parseInt(d.timestamp, 10));
                         d.color = color(d.temperature);
                         d.index = index;
+                        d.previous = previous;
+
                         if (previous) {
                             var gradient;
 
-                            d.previous = previous;
                             d.gradient = 'gradient' + d.timestamp;
                             d.gradientUrl = 'url(#' + d.gradient + ')';
 
-                            gradient = svg.append('linearGradient')
-                                    .attr('id', d.gradient);
-
-                            gradient.append('stop')
-                                    .attr('stop-color', d.color)
-                                    .attr('offset', '0%');
-                            gradient.append('stop')
-                                    .attr('stop-color', d.previous.color)
-                                    .attr('offset', '100%');
                         }
                         previous = d;
                         index += 1;
