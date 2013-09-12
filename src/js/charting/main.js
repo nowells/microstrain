@@ -23,6 +23,8 @@ define(function(require) {
                     .attr('class', 'd3-vec'),
                 svg = div.append('svg'),
                 g = svg.append('g'),
+                connectors = g.append('g').attr('class', 'connectors'),
+                points = g.append('g').attr('class', 'points'),
                 getter = function(attr) {
                     return function(d) { return d[attr]; };
                 };
@@ -77,7 +79,7 @@ define(function(require) {
                         d.y = coords.y;
                     });
 
-                    groups.selectAll('path')
+                    svg.selectAll('path')
                         .attr('stroke', getter('gradientUrl'))
                         .attr('d', function(d) {
                             if (d.previous) {
@@ -85,23 +87,34 @@ define(function(require) {
                             }
                         });
 
-                    groups.selectAll('circle')
+                    svg.selectAll('circle')
                         .attr('fill', getter('color'))
                         .attr('cx', getter('x'))
                         .attr('cy', getter('y'));
+
+                    svg.selectAll('text')
+                        .attr('x', getter('x'))
+                        .attr('y', getter('y'));
                 };
 
                 f.data = function(collection) {
                     data = collection;
 
-                    groups = g.selectAll('g.sample').data(data)
+                    groups = points.selectAll('g.sample').data(data)
                         .enter().append('g')
                         .attr('class', 'sample');
 
-                    groups.append('path');
+                    groups.append('path')
+                        .each(function() { connectors.node().appendChild(this); });
+
                     groups.append('circle')
                         .attr('r', 10);
 
+                    groups.append('text')
+                        .attr('text-anchor', 'middle')
+                        .attr('dominant-baseline', 'middle')
+                        .attr('fill', 'black')
+                        .text(getter('index'));
 
                     return f;
                 };
@@ -111,7 +124,7 @@ define(function(require) {
 
             mapbox.auto('map', 'examples.map-vyofok3q', function(map) {
                 d3.csv('src/data/measurements.csv', function(data) {
-                    var layer, midPoint, previous = null,
+                    var layer, midPoint, previous = null, index = 1,
                         color = d3.scale.linear().domain([
                             d3.min(data, getter('temperature')),
                             d3.mean(data, getter('temperature')),
@@ -121,6 +134,7 @@ define(function(require) {
                     _(data).each(function(d) {
                         d.datetime = new Date(parseInt(d.timestamp, 10));
                         d.color = color(d.temperature);
+                        d.index = index;
                         if (previous) {
                             var gradient;
 
@@ -139,6 +153,7 @@ define(function(require) {
                                     .attr('offset', '100%');
                         }
                         previous = d;
+                        index += 1;
                     });
 
                     nv.addGraph(function() {
